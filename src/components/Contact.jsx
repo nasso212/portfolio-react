@@ -1,66 +1,139 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 
-const Contact = () => {
-  const [formData, setFormData] = useState({ name: '', email: '', message: '' });
-  const [status, setStatus] = useState('');
+export default function Contact() {
+  // État pour le statut du formulaire
+  const [submitting, setSubmitting] = useState(false);      // True pendant l'envoi
+  const [statusMessage, setStatusMessage] = useState(null); // Message de succès/erreur
+  const [statusOk, setStatusOk] = useState(null);           // null = pas de message, true = succès, false = erreur
 
-  const handleChange = e => {
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
-  };
-
+  // Gestion de la soumission du formulaire
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setStatus('Envoi en cours...');
+    setSubmitting(true);
+    setStatusMessage(null);   // Réinitialise le message précédent
+    setStatusOk(null);
+
     try {
-      const res = await fetch('https://formspree.io/f/YOUR_FORM_ID', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+      const form = e.target;
+      const data = new FormData(form);
+      const response = await fetch(form.action, {
+        method: form.method,
+        body: data,
+        headers: {
+          'Accept': 'application/json'
+        }
       });
-      if (res.ok) {
-        setStatus('Message envoyé !');
-        setFormData({ name: '', email: '', message: '' });
+      if (response.ok) {
+        // Succès de l'envoi
+        setStatusOk(true);
+        setStatusMessage("✅ Votre message a bien été envoyé.");
+        form.reset();  // Réinitialiser le formulaire (vider les champs)
       } else {
-        setStatus('Erreur. Réessayez.');
+        // Erreur côté serveur (ex: champ manquant, etc.)
+        const result = await response.json();
+        if (result.errors && result.errors.length > 0) {
+          // Concaténer les messages d’erreur éventuels renvoyés par Formspree
+          const messages = result.errors.map(err => err.message).join(", ");
+          setStatusMessage("❌ " + messages);
+        } else {
+          setStatusMessage("❌ Oups! Un problème est survenu lors de l'envoi du formulaire.");
+        }
+        setStatusOk(false);
       }
     } catch (error) {
-      setStatus('Erreur serveur.');
+      // Erreur réseau ou exception
+      setStatusOk(false);
+      setStatusMessage("❌ Oups! Une erreur réseau est survenue. Veuillez réessayer plus tard.");
+    } finally {
+      setSubmitting(false);
     }
   };
 
   return (
-    <section className="bg-white p-6 md:p-10 rounded-3xl shadow-2xl max-w-4xl mx-auto animate-fade-in-up">
-      <h2 className="text-4xl font-extrabold text-blue-800 mb-8 text-center">Connectons-nous !</h2>
+    <section className="animate-fade-in-up max-w-5xl mx-auto px-4 py-8">
+      <h2 className="text-5xl font-extrabold text-blue-800 mb-12 text-center">
+        Connectons-nous !
+      </h2>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div>
-          <label className="block mb-2 font-medium text-gray-700">Nom</label>
-          <input type="text" name="name" value={formData.name} onChange={handleChange} required
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg" />
-        </div>
-        <div>
-          <label className="block mb-2 font-medium text-gray-700">Email</label>
-          <input type="email" name="email" value={formData.email} onChange={handleChange} required
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg" />
-        </div>
-        <div>
-          <label className="block mb-2 font-medium text-gray-700">Message</label>
-          <textarea name="message" value={formData.message} onChange={handleChange} rows="6" required
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg"></textarea>
-        </div>
-        <button type="submit" className="bg-blue-700 text-white px-6 py-3 rounded-full font-semibold shadow hover:bg-blue-800">
-          Envoyer
-        </button>
-        {status && <p className="mt-4 text-center text-sm text-gray-600">{status}</p>}
-      </form>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+        {/* Formulaire de contact */}
+        <form 
+          onSubmit={handleSubmit}
+          action="https://formspree.io/f/xrbkorzp" 
+          method="POST"
+          className="bg-blue-50 p-6 rounded-xl space-y-6 shadow"
+        >
+          <div>
+            <label htmlFor="name" className="block text-lg font-medium mb-1">Votre Nom</label>
+            <input 
+              id="name" 
+              name="name" 
+              type="text" 
+              placeholder="Votre nom complet" 
+              className="w-full border px-4 py-2 rounded" 
+              required 
+            />
+          </div>
+          <div>
+            <label htmlFor="email" className="block text-lg font-medium mb-1">Votre E-mail</label>
+            <input 
+              id="email" 
+              name="email" 
+              type="email" 
+              placeholder="votre.email@example.com" 
+              className="w-full border px-4 py-2 rounded" 
+              required 
+            />
+          </div>
+          <div>
+            <label htmlFor="message" className="block text-lg font-medium mb-1">Votre Message</label>
+            <textarea 
+              id="message" 
+              name="message" 
+              placeholder="Écrivez votre message ici..." 
+              className="w-full border px-4 py-2 rounded" 
+              rows="5" 
+              required 
+            />
+          </div>
 
-      <div className="mt-12 text-center">
-        <p className="text-xl mb-2">📞 +33 7 82 85 08 79</p>
-        <p className="text-xl">📧 nassim.ak@outlook.fr</p>
+          <button 
+            type="submit" 
+            className="bg-blue-700 hover:bg-blue-800 text-white font-bold px-6 py-2 rounded-full disabled:opacity-50" 
+            disabled={submitting}
+          >
+            {submitting ? "Envoi en cours..." : "Envoyer le message"}
+          </button>
+
+          {/* Message de statut (succès ou erreur) */}
+          {statusMessage && (
+            <p 
+              className={
+                "mt-4 text-lg font-medium text-center " + 
+                (statusOk ? "text-green-700" : "text-red-600") + 
+                " animate-fade-in-up"
+              }
+            >
+              {statusMessage}
+            </p>
+          )}
+        </form>
+
+        {/* Coordonnées directes */}
+        <div className="bg-blue-700 text-white p-6 rounded-xl flex flex-col justify-center items-center space-y-6 shadow-xl">
+          <h3 className="text-3xl font-bold">Me contacter directement :</h3>
+          <p className="text-xl flex items-center">
+            <span className="text-2xl mr-3">📞</span> +33 7 82 85 08 79
+          </p>
+          <p className="text-xl flex items-center">
+            <span className="text-2xl mr-3">📧</span> nassim.ak@outlook.fr
+          </p>
+          <p className="text-lg mt-4 text-center">
+            Je suis à votre disposition pour toute question ou opportunité !
+          </p>
+          <span className="text-6xl animate-pulse">🤝</span>
+        </div>
       </div>
     </section>
   );
-};
-
-export default Contact;
+}
