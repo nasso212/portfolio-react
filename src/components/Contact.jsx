@@ -123,7 +123,7 @@ export default function Contact() {
         <div className="bg-blue-700 text-white p-6 rounded-xl flex flex-col justify-center items-center space-y-6 shadow-xl">
           <h3 className="text-3xl font-bold">Me contacter directement :</h3>
           <p className="text-xl flex items-center">
-            <span className="text-2xl mr-3">📞</span> +33 7 82 85 08 79
+            <span className="text-2xl mr-3">📞</span> +33 7 82 65 08 79
           </p>
           <p className="text-xl flex items-center">
             <span className="text-2xl mr-3">📧</span> nassim.ak@outlook.fr
